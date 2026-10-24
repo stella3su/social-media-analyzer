@@ -2,9 +2,18 @@ import streamlit as st
 import asyncio
 import plotly.graph_objects as go
 import os
+import subprocess
 from dotenv import load_dotenv
 from collectors import fetch_douyin_data
 from analyzer import analyze_content_with_ai
+
+# --- 新增：云端自动安装 Playwright 浏览器 ---
+@st.cache_resource
+def install_playwright_browser():
+    subprocess.run(["playwright", "install", "chromium"], check=True)
+
+install_playwright_browser()
+# -------------------------------------------
 
 # 1. 本地运行：加载 .env 文件
 load_dotenv()
