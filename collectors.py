@@ -33,11 +33,19 @@ async def fetch_douyin_data(short_url: str, headless: bool = True) -> dict:
     short_url = match.group(0)
 
     async with async_playwright() as p:
+        # ================= 核心修改点 1：加入反爬伪装 =================
         context = await p.chromium.launch_persistent_context(
             user_data_dir=PROFILE_DIR,
             headless=headless,
             viewport={"width": 1440, "height": 900},
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            args=[
+                "--disable-blink-features=AutomationControlled",
+                "--no-sandbox",
+                "--disable-dev-shm-usage"
+            ]
         )
+        # ==============================================================
 
         detail_data = {"body": None}
 
@@ -54,8 +62,11 @@ async def fetch_douyin_data(short_url: str, headless: bool = True) -> dict:
 
         try:
             await page.goto(short_url, wait_until="domcontentloaded", timeout=60000)
-            # 等待 10 秒，确保页面元素和接口数据加载完毕
-            await page.wait_for_timeout(10000)
+
+            # ================= 核心修改点 2：延长等待时间 =================
+            # 从 10 秒改为 15 秒，给云端服务器多一点加载时间
+            await page.wait_for_timeout(15000)
+            # ==============================================================
 
             if not detail_data["body"]:
                 # 如果抓取失败，保存截图供排查
