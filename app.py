@@ -1,8 +1,17 @@
 import streamlit as st
 import asyncio
 import plotly.graph_objects as go
+import os
+from dotenv import load_dotenv
 from collectors import fetch_douyin_data
 from analyzer import analyze_content_with_ai
+
+# 1. 本地运行：加载 .env 文件
+load_dotenv()
+
+# 2. 云端运行：从 Streamlit Secrets 读取密钥并注入到环境变量中
+if "DEEPSEEK_API_KEY" in st.secrets:
+    os.environ["DEEPSEEK_API_KEY"] = st.secrets["DEEPSEEK_API_KEY"]
 
 # 1. 页面基础设置
 st.set_page_config(page_title="竞品内容智能分析系统", page_icon="📊", layout="wide")
