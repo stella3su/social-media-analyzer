@@ -25,11 +25,10 @@ try:
 except:
     pass
 
-# ================= 修改了这里的标题 =================
+# 页面设置
 st.set_page_config(page_title="新媒体内容智能分析系统", page_icon="📊", layout="wide")
 st.title("📊 新媒体内容智能分析系统")
 st.markdown("粘贴链接，一键获取作品数据并生成 AI 深度分析报告。")
-# ====================================================
 
 # 初始化状态
 if "raw_data" not in st.session_state:
@@ -37,11 +36,13 @@ if "raw_data" not in st.session_state:
 if "ai_result" not in st.session_state:
     st.session_state.ai_result = None
 
+# 侧边栏
 with st.sidebar:
     st.header("平台选择")
     platform = st.radio("请选择平台：", ["抖音", "小红书"], index=0)
     st.info("💡 提示：小红书受限于平台强风控，推荐填写下方表单以确保分析准确。")
 
+# 主界面输入
 url_input = st.text_area("🔗 请输入作品分享链接或完整分享文本：", height=100, placeholder="例如：4.10 j@C.uF... https://v.douyin.com/...")
 
 if st.button("🚀 开始分析", type="primary"):
@@ -61,7 +62,7 @@ if st.button("🚀 开始分析", type="primary"):
                     st.session_state.raw_data = raw_data
                     st.success("✅ 抖音数据采集成功！")
         elif platform == "小红书":
-            # 小红书直接进入表单模式，保证体验绝对可用
+            # 小红书强制表单模式
             st.session_state.raw_data = {
                 "platform": "xiaohongshu", "aweme_id": "manual", "author": "手动输入",
                 "title": "", "description": "", "likes": 0, "comments": 0,
@@ -69,7 +70,7 @@ if st.button("🚀 开始分析", type="primary"):
             }
             st.success("✅ 请填写下方信息：")
 
-# =============== 小红书强制表单区 ===============
+# =============== 小红书表单区 ===============
 if st.session_state.raw_data and st.session_state.raw_data.get("platform") == "xiaohongshu":
     with st.form("manual_input_form"):
         st.warning("⚠️ 请粘贴或补充以下真实数据，AI 分析将基于此生成：")
@@ -148,10 +149,14 @@ if st.session_state.raw_data:
             st.divider()
 
             st.subheader("📥 导出分析报告")
+
+            # 将英文代号转换为中文显示
+            platform_cn = "抖音" if raw_data.get('platform') == "douyin" else "小红书"
+
             report_md = f"""# 新媒体内容分析报告
 
 ## 一、 作品基础数据
-- **平台**: {raw_data.get('platform')}
+- **平台**: {platform_cn}
 - **文案**: {raw_data.get('description')}
 
 **数据表现**: 点赞 {metrics['点赞']} | 评论 {metrics['评论']} | 收藏 {metrics['收藏']} | 分享 {metrics['分享']}
