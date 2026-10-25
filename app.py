@@ -25,9 +25,11 @@ try:
 except:
     pass
 
-st.set_page_config(page_title="竞品内容智能分析系统", page_icon="📊", layout="wide")
-st.title("📊 新媒体竞品内容智能分析系统")
+# ================= 修改了这里的标题 =================
+st.set_page_config(page_title="新媒体内容智能分析系统", page_icon="📊", layout="wide")
+st.title("📊 新媒体内容智能分析系统")
 st.markdown("粘贴链接，一键获取作品数据并生成 AI 深度分析报告。")
+# ====================================================
 
 # 初始化状态
 if "raw_data" not in st.session_state:
@@ -38,7 +40,7 @@ if "ai_result" not in st.session_state:
 with st.sidebar:
     st.header("平台选择")
     platform = st.radio("请选择平台：", ["抖音", "小红书"], index=0)
-    st.info("💡 提示：小红书已接入自动抓取，若平台风控拦截，请在下方核对补全。")
+    st.info("💡 提示：小红书受限于平台强风控，推荐填写下方表单以确保分析准确。")
 
 url_input = st.text_area("🔗 请输入作品分享链接或完整分享文本：", height=100, placeholder="例如：4.10 j@C.uF... https://v.douyin.com/...")
 
@@ -46,6 +48,7 @@ if st.button("🚀 开始分析", type="primary"):
     if not url_input:
         st.warning("请先输入内容或链接！")
     else:
+        # 重置状态
         st.session_state.raw_data = None
         st.session_state.ai_result = None
 
@@ -57,41 +60,29 @@ if st.button("🚀 开始分析", type="primary"):
                 else:
                     st.session_state.raw_data = raw_data
                     st.success("✅ 抖音数据采集成功！")
-
         elif platform == "小红书":
-            with st.spinner("正在尝试自动抓取小红书数据（约 15 秒，请稍候）..."):
-                # 调用真正的爬虫函数！
-                raw_data = asyncio.run(fetch_xiaohongshu_data(url_input, headless=True))
+            # 小红书直接进入表单模式，保证体验绝对可用
+            st.session_state.raw_data = {
+                "platform": "xiaohongshu", "aweme_id": "manual", "author": "手动输入",
+                "title": "", "description": "", "likes": 0, "comments": 0,
+                "favorites": 0, "shares": 0, "publish_time": "未知", "video_url": url_input
+            }
+            st.success("✅ 请填写下方信息：")
 
-                # 不管抓到多少，都存入状态，让下面的表单去展示
-                if "error" in raw_data:
-                    st.warning(f"⚠️ 自动抓取受限：{raw_data['error']}")
-                    # 如果报错，给一个空壳，让用户填
-                    st.session_state.raw_data = {
-                        "platform": "xiaohongshu", "aweme_id": "manual", "author": "手动输入",
-                        "title": "", "description": "", "likes": 0, "comments": 0,
-                        "favorites": 0, "shares": 0, "publish_time": "未知", "video_url": url_input
-                    }
-                else:
-                    st.success("✅ 自动抓取流程完成！请检查下方数据是否准确。")
-                    st.session_state.raw_data = raw_data
-
-# =============== 小红书表单区（自动抓到的数据会自动填入） ===============
+# =============== 小红书强制表单区 ===============
 if st.session_state.raw_data and st.session_state.raw_data.get("platform") == "xiaohongshu":
     with st.form("manual_input_form"):
-        st.warning("⚠️ 请核对并补全下方信息（部分字段可能因小红书风控未抓到），确认后生成报告：")
+        st.warning("⚠️ 请粘贴或补充以下真实数据，AI 分析将基于此生成：")
 
-        # 将爬虫抓到的数据作为默认值填入表单
         new_title = st.text_input("作品标题", value=st.session_state.raw_data.get("title", ""))
         new_desc = st.text_area("作品文案（必填）", value=st.session_state.raw_data.get("description", ""), height=100)
 
         col_m1, col_m2, col_m3, col_m4 = st.columns(4)
-        new_likes = col_m1.number_input("点赞量", min_value=0, value=int(st.session_state.raw_data.get("likes", 0) or 0))
-        new_comments = col_m2.number_input("评论量", min_value=0,
-                                           value=int(st.session_state.raw_data.get("comments", 0) or 0))
+        new_likes = col_m1.number_input("点赞量", min_value=0, value=int(st.session_state.raw_data.get("likes", 0)))
+        new_comments = col_m2.number_input("评论量", min_value=0, value=int(st.session_state.raw_data.get("comments", 0)))
         new_favorites = col_m3.number_input("收藏量", min_value=0,
-                                            value=int(st.session_state.raw_data.get("favorites", 0) or 0))
-        new_shares = col_m4.number_input("分享量", min_value=0, value=int(st.session_state.raw_data.get("shares", 0) or 0))
+                                            value=int(st.session_state.raw_data.get("favorites", 0)))
+        new_shares = col_m4.number_input("分享量", min_value=0, value=int(st.session_state.raw_data.get("shares", 0)))
 
         submit_btn = st.form_submit_button("确认数据并生成 AI 洞察", type="primary")
         if submit_btn:
@@ -107,6 +98,7 @@ if st.session_state.raw_data and st.session_state.raw_data.get("platform") == "x
 if st.session_state.raw_data:
     raw_data = st.session_state.raw_data
 
+    # 只有当文案不为空时，才展示图表和 AI 结果
     if raw_data.get("description"):
         st.subheader("📌 作品基础数据")
         col1, col2, col3, col4 = st.columns(4)
@@ -156,7 +148,9 @@ if st.session_state.raw_data:
             st.divider()
 
             st.subheader("📥 导出分析报告")
-            report_md = f"""# 新媒体竞品分析报告
+            # ================= 修改了这里的报告标题 =================
+            report_md = f"""# 新媒体内容分析报告
+            # =======================================================
 
 ## 一、 作品基础数据
 - **平台**: {raw_data.get('platform')}
@@ -172,5 +166,5 @@ if st.session_state.raw_data:
 """
             st.download_button(
                 label="📄 下载 Markdown 分析报告", data=report_md,
-                file_name=f"竞品分析报告_{raw_data.get('aweme_id', '未知')}.md", mime="text/markdown"
+                file_name=f"内容分析报告_{raw_data.get('aweme_id', '未知')}.md", mime="text/markdown"
             )
